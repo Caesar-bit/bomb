@@ -56,12 +56,18 @@ namespace EMS.Api.Controllers
         }
 
         [HttpGet("export")]
-        public IActionResult Export(DateTime from, DateTime to)
+        public IActionResult Export(DateTime from, DateTime to, string format = "csv")
         {
             var records = _context.AttendanceRecords
                 .Where(r => r.Date >= from && r.Date <= to)
                 .AsNoTracking()
                 .ToList();
+
+            if (format == "json")
+            {
+                return Ok(records);
+            }
+
             using var writer = new StringWriter();
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {

@@ -22,10 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const formSchema = z.object({
-  employee: z.string().min(2, { message: "Employee name is required" }),
-  period: z.string().min(1, { message: "Review period is required" }),
+  employeeId: z.number({ invalid_type_error: "Employee ID is required" }).int().positive(),
+  date: z.string().min(1, { message: "Date is required" }),
   rating: z
     .number({ invalid_type_error: "Rating is required" })
     .min(1, { message: "Minimum rating is 1" })
@@ -44,20 +45,37 @@ export function NewReviewDialog({ children }: NewReviewDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      employee: "",
-      period: "",
+      employeeId: 0,
+      date: "",
       rating: 1,
       comments: "",
     },
   });
 
-  const onSubmit = (values: FormValues) => {
-    toast({
-      title: "Review Submitted",
-      description: `${values.employee}'s review has been recorded.`,
-    });
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (values: FormValues) => {
+    try {
+      await api("/api/performance/reviews", {
+        method: "POST",
+        body: JSON.stringify({
+          employeeId: values.employeeId,
+          date: values.date,
+          score: values.rating,
+          comments: values.comments,
+        }),
+      });
+      toast({
+        title: "Review Submitted",
+        description: `Review for employee ${values.employeeId} has been recorded.`,
+      });
+      setOpen(false);
+      form.reset();
+    } catch (err) {
+      toast({
+        title: "Submission Failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -71,12 +89,12 @@ export function NewReviewDialog({ children }: NewReviewDialogProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="employee"
+              name="employeeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Employee</FormLabel>
+                  <FormLabel>Employee ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -84,12 +102,12 @@ export function NewReviewDialog({ children }: NewReviewDialogProps) {
             />
             <FormField
               control={form.control}
-              name="period"
+              name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Review Period</FormLabel>
+                  <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input placeholder="Q1 2024" {...field} />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

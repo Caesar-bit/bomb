@@ -29,9 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const formSchema = z.object({
-  employee: z.string().min(2, { message: "Employee name is required" }),
+  employeeId: z.number({ invalid_type_error: "Employee ID is required" }).int().positive(),
   type: z.string().min(1, { message: "Leave type is required" }),
   start: z.string().min(1, { message: "Start date is required" }),
   end: z.string().min(1, { message: "End date is required" }),
@@ -49,7 +50,7 @@ export function NewLeaveRequestDialog({ children }: NewLeaveRequestDialogProps) 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      employee: "",
+      employeeId: 0,
       type: "",
       start: "",
       end: "",
@@ -57,13 +58,30 @@ export function NewLeaveRequestDialog({ children }: NewLeaveRequestDialogProps) 
     },
   });
 
-  const onSubmit = (values: FormValues) => {
-    toast({
-      title: "Leave Request Submitted",
-      description: `${values.employee} requested ${values.type} leave.`,
-    });
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (values: FormValues) => {
+    try {
+      await api("/api/leaverequests", {
+        method: "POST",
+        body: JSON.stringify({
+          employeeId: values.employeeId,
+          startDate: values.start,
+          endDate: values.end,
+          reason: `${values.type}: ${values.reason}`,
+        }),
+      });
+      toast({
+        title: "Leave Request Submitted",
+        description: `Employee ${values.employeeId} requested ${values.type} leave.`,
+      });
+      setOpen(false);
+      form.reset();
+    } catch (err) {
+      toast({
+        title: "Submission Failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -77,12 +95,12 @@ export function NewLeaveRequestDialog({ children }: NewLeaveRequestDialogProps) 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="employee"
+              name="employeeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Employee</FormLabel>
+                  <FormLabel>Employee ID</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input type="number" {...field} onChange={(e) => field.onChange(e.target.valueAsNumber)} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

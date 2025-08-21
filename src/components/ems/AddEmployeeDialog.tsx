@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
@@ -33,9 +34,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface AddEmployeeDialogProps {
   children: React.ReactNode;
+  onAdded?: () => void;
 }
 
-export function AddEmployeeDialog({ children }: AddEmployeeDialogProps) {
+export function AddEmployeeDialog({ children, onAdded }: AddEmployeeDialogProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -47,13 +49,26 @@ export function AddEmployeeDialog({ children }: AddEmployeeDialogProps) {
     },
   });
 
-  const onSubmit = (values: FormValues) => {
-    toast({
-      title: "Employee Added",
-      description: `${values.name} has been added to the system.`,
-    });
-    setOpen(false);
-    form.reset();
+  const onSubmit = async (values: FormValues) => {
+    try {
+      await api("/api/employees", {
+        method: "POST",
+        body: JSON.stringify(values),
+      });
+      toast({
+        title: "Employee Added",
+        description: `${values.name} has been added to the system.`,
+      });
+      onAdded?.();
+      setOpen(false);
+      form.reset();
+    } catch (err) {
+      toast({
+        title: "Failed to add employee",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (

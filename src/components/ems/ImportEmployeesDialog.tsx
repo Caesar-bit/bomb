@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import type { Employee } from "@/types/employee";
 
 const formSchema = z.object({
   file: z
@@ -46,27 +44,31 @@ export function ImportEmployeesDialog({ children }: ImportEmployeesDialogProps) 
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const file = (values.file as FileList)[0];
-    Papa.parse<Employee>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        toast({
-          title: "Import Successful",
-          description: `${results.data.length} employees imported`,
-        });
-        setOpen(false);
-        form.reset();
-      },
-      error: () => {
-        toast({
-          title: "Import Failed",
-          description: "Unable to parse CSV file",
-          variant: "destructive",
-        });
-      },
-    });
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/employees/import", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      toast({
+        title: "Import Successful",
+        description: `${data.imported} employees imported`,
+      });
+      setOpen(false);
+      form.reset();
+    } catch (err) {
+      toast({
+        title: "Import Failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (

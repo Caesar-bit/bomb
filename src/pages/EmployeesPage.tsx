@@ -23,7 +23,6 @@ import { mockEmployees } from "@/data/mockData";
 import { Employee } from "@/types/employee";
 import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 import { ImportEmployeesDialog } from "@/components/ems/ImportEmployeesDialog";
-import Papa from "papaparse";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -40,9 +39,10 @@ const EmployeesPage = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
-  const handleExport = () => {
-    const csv = Papa.unparse(mockEmployees);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const handleExport = async () => {
+    const res = await fetch("/api/employees/export");
+    if (!res.ok) return;
+    const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;

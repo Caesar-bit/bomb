@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { mockEmployees } from "@/data/mockData";
 
 const formSchema = z
   .object({
@@ -52,8 +50,7 @@ export function ExportAttendanceReportDialog({ children }: ExportAttendanceRepor
     },
   });
 
-  const download = (data: string, filename: string, type: string) => {
-    const blob = new Blob([data], { type });
+  const download = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -63,22 +60,27 @@ export function ExportAttendanceReportDialog({ children }: ExportAttendanceRepor
     document.body.removeChild(link);
   };
 
-  const onSubmit = (values: FormValues) => {
-    const attendance = mockEmployees.map(({ name, status }) => ({ name, status }));
-
-    if (values.format === "csv") {
-      const csv = Papa.unparse(attendance);
-      download(csv, `attendance-${values.start}-to-${values.end}.csv`, "text/csv;charset=utf-8;");
-    } else {
-      const json = JSON.stringify(attendance, null, 2);
-      download(json, `attendance-${values.start}-to-${values.end}.json`, "application/json;charset=utf-8;");
+  const onSubmit = async (values: FormValues) => {
+    try {
+      const res = await fetch(
+        `/api/attendance/export?from=${values.start}&to=${values.end}&format=${values.format}`
+      );
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const filename = `attendance-${values.start}-to-${values.end}.${values.format}`;
+      download(blob, filename);
+      toast({
+        title: "Report Exported",
+        description: `Attendance report from ${values.start} to ${values.end} downloaded`,
+      });
+      setOpen(false);
+    } catch (err) {
+      toast({
+        title: "Export Failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
     }
-
-    toast({
-      title: "Report Exported",
-      description: `Attendance report from ${values.start} to ${values.end} downloaded`,
-    });
-    setOpen(false);
   };
 
   return (

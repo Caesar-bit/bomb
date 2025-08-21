@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { mockEmployees } from "@/data/mockData";
 
 const formSchema = z.object({
   period: z.string().min(1, { message: "Period is required" }),
@@ -45,8 +43,7 @@ export function GenerateReportDialog({ children }: GenerateReportDialogProps) {
     },
   });
 
-  const download = (data: string, filename: string, type: string) => {
-    const blob = new Blob([data], { type });
+  const download = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -56,29 +53,26 @@ export function GenerateReportDialog({ children }: GenerateReportDialogProps) {
     document.body.removeChild(link);
   };
 
-  const onSubmit = (values: FormValues) => {
-    const topPerformers = [...mockEmployees]
-      .sort((a, b) => b.performance - a.performance)
-      .slice(0, 5)
-      .map(({ name, department, performance }) => ({
-        name,
-        department,
-        performance,
-      }));
-
-    if (values.format === "csv") {
-      const csv = Papa.unparse(topPerformers);
-      download(csv, `performance-report-${values.period}.csv`, "text/csv;charset=utf-8;");
-    } else {
-      const json = JSON.stringify(topPerformers, null, 2);
-      download(json, `performance-report-${values.period}.json`, "application/json;charset=utf-8;");
+  const onSubmit = async (values: FormValues) => {
+    try {
+      const res = await fetch(
+        `/api/performance/report?format=${values.format}`
+      );
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      download(blob, `performance-report-${values.period}.${values.format}`);
+      toast({
+        title: "Report Generated",
+        description: `Performance report for ${values.period} downloaded`,
+      });
+      setOpen(false);
+    } catch (err) {
+      toast({
+        title: "Report Failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
     }
-
-    toast({
-      title: "Report Generated",
-      description: `Performance report for ${values.period} downloaded`,
-    });
-    setOpen(false);
   };
 
   return (
