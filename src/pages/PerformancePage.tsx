@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { mockEmployees } from "@/data/mockData";
 import { NewReviewDialog } from "@/components/ems/NewReviewDialog";
+import { GenerateReportDialog } from "@/components/ems/GenerateReportDialog";
 
 const PerformancePage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("Q1 2024");
@@ -74,10 +75,12 @@ const PerformancePage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Generate Report
-          </Button>
+          <GenerateReportDialog>
+            <Button variant="outline" className="gap-2">
+              <FileText className="h-4 w-4" />
+              Generate Report
+            </Button>
+          </GenerateReportDialog>
           <NewReviewDialog>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />

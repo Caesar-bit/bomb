@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { mockLeaveRequests, mockEmployees } from "@/data/mockData";
 import { NewLeaveRequestDialog } from "@/components/ems/NewLeaveRequestDialog";
+import { ExportAttendanceReportDialog } from "@/components/ems/ExportAttendanceReportDialog";
 
 const AttendancePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -61,10 +62,12 @@ const AttendancePage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export Report
-          </Button>
+          <ExportAttendanceReportDialog>
+            <Button variant="outline" className="gap-2">
+              <Download className="h-4 w-4" />
+              Export Report
+            </Button>
+          </ExportAttendanceReportDialog>
           <NewLeaveRequestDialog>
             <Button className="gap-2">
               <Plus className="h-4 w-4" />

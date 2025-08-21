@@ -22,6 +22,8 @@ import {
 import { mockEmployees } from "@/data/mockData";
 import { Employee } from "@/types/employee";
 import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
+import { ImportEmployeesDialog } from "@/components/ems/ImportEmployeesDialog";
+import Papa from "papaparse";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -37,6 +39,18 @@ const EmployeesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  const handleExport = () => {
+    const csv = Papa.unparse(mockEmployees);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "employees.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const departments = Array.from(new Set(mockEmployees.map(emp => emp.department)));
   
@@ -59,11 +73,13 @@ const EmployeesPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Upload className="h-4 w-4" />
-            Import
-          </Button>
-          <Button variant="outline" className="gap-2">
+          <ImportEmployeesDialog>
+            <Button variant="outline" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import
+            </Button>
+          </ImportEmployeesDialog>
+          <Button variant="outline" className="gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export
           </Button>
