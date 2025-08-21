@@ -1,5 +1,7 @@
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       ...(options.headers || {})
@@ -17,3 +19,5 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   // @ts-expect-error allow returning void for non-json responses
   return undefined;
 }
+
+export { API_BASE };

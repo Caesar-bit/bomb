@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { API_BASE } from "@/lib/api";
 
 const formSchema = z.object({
   file: z
@@ -51,7 +52,7 @@ export function ImportEmployeesDialog({ children, onImported }: ImportEmployeesD
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/employees/import", {
+      const res = await fetch(`${API_BASE}/api/employees/import`, {
         method: "POST",
         body: formData,
       });

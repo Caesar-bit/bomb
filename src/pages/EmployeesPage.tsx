@@ -22,7 +22,7 @@ import {
 import { Employee } from "@/types/employee";
 import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 import { ImportEmployeesDialog } from "@/components/ems/ImportEmployeesDialog";
-import { api } from "@/lib/api";
+import { api, API_BASE } from "@/lib/api";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -50,7 +50,7 @@ const EmployeesPage = () => {
   }, []);
 
   const handleExport = async () => {
-    const res = await fetch("/api/employees/export");
+    const res = await fetch(`${API_BASE}/api/employees/export`);
     if (!res.ok) return;
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);

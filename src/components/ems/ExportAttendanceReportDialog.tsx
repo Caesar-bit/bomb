@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
+import { API_BASE } from "@/lib/api";
 
 const formSchema = z
   .object({
@@ -63,7 +64,7 @@ export function ExportAttendanceReportDialog({ children }: ExportAttendanceRepor
   const onSubmit = async (values: FormValues) => {
     try {
       const res = await fetch(
-        `/api/attendance/export?from=${values.start}&to=${values.end}&format=${values.format}`
+        `${API_BASE}/api/attendance/export?from=${values.start}&to=${values.end}&format=${values.format}`
       );
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();

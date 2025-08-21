@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
+import { API_BASE } from "@/lib/api";
 
 const formSchema = z.object({
   period: z.string().min(1, { message: "Period is required" }),
@@ -56,7 +57,7 @@ export function GenerateReportDialog({ children }: GenerateReportDialogProps) {
   const onSubmit = async (values: FormValues) => {
     try {
       const res = await fetch(
-        `/api/performance/report?format=${values.format}`
+        `${API_BASE}/api/performance/report?format=${values.format}`
       );
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();

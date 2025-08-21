@@ -3,3 +3,4 @@ dist/
 # .NET build artifacts
 **/bin/
 **/obj/
+**/*.db
