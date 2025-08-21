@@ -23,6 +23,7 @@ import { Employee } from "@/types/employee";
 import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 import { ImportEmployeesDialog } from "@/components/ems/ImportEmployeesDialog";
 import { api, API_BASE } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -41,8 +42,16 @@ const EmployeesPage = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   const loadEmployees = async () => {
-    const data = await api<Employee[]>("/api/employees");
-    setEmployees(data);
+    try {
+      const data = await api<Employee[]>("/api/employees");
+      setEmployees(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load employees",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {
@@ -50,16 +59,24 @@ const EmployeesPage = () => {
   }, []);
 
   const handleExport = async () => {
-    const res = await fetch(`${API_BASE}/api/employees/export`);
-    if (!res.ok) return;
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "employees.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const res = await fetch(`${API_BASE}/api/employees/export`);
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "employees.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      toast({
+        title: "Export failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   const departments = Array.from(new Set(employees.map(emp => emp.department)));

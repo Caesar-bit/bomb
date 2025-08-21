@@ -8,6 +8,7 @@ import { Search, Plus, Filter } from "lucide-react";
 import { api } from "@/lib/api";
 import { Employee } from "@/types/employee";
 import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
+import { toast } from "@/hooks/use-toast";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -34,9 +35,17 @@ export const EmployeeList = () => {
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
 
   const loadEmployees = async () => {
-    const data = await api<Employee[]>("/api/employees");
-    setEmployees(data);
-    setFilteredEmployees(data);
+    try {
+      const data = await api<Employee[]>("/api/employees");
+      setEmployees(data);
+      setFilteredEmployees(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load employees",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {

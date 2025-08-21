@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Employee } from "@/types/employee";
+import { toast } from "@/hooks/use-toast";
 
 const PayrollPage = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -24,8 +25,16 @@ const PayrollPage = () => {
   const [animatedPayroll, setAnimatedPayroll] = useState(0);
 
   const loadEmployees = async () => {
-    const data = await api<Employee[]>("/api/employees");
-    setEmployees(data);
+    try {
+      const data = await api<Employee[]>("/api/employees");
+      setEmployees(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load employees",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {

@@ -21,14 +21,23 @@ import { api } from "@/lib/api";
 import { Employee } from "@/types/employee";
 import { NewReviewDialog } from "@/components/ems/NewReviewDialog";
 import { GenerateReportDialog } from "@/components/ems/GenerateReportDialog";
+import { toast } from "@/hooks/use-toast";
 
 const PerformancePage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("Q1 2024");
   const [employees, setEmployees] = useState<Employee[]>([]);
 
   const loadEmployees = async () => {
-    const data = await api<Employee[]>("/api/employees");
-    setEmployees(data);
+    try {
+      const data = await api<Employee[]>("/api/employees");
+      setEmployees(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load employees",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {

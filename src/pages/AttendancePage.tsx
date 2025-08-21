@@ -20,6 +20,7 @@ import { NewLeaveRequestDialog } from "@/components/ems/NewLeaveRequestDialog";
 import { ExportAttendanceReportDialog } from "@/components/ems/ExportAttendanceReportDialog";
 import { api } from "@/lib/api";
 import { Employee, LeaveRequest } from "@/types/employee";
+import { toast } from "@/hooks/use-toast";
 
 const AttendancePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -27,13 +28,29 @@ const AttendancePage = () => {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 
   const loadEmployees = async () => {
-    const data = await api<Employee[]>("/api/employees");
-    setEmployees(data);
+    try {
+      const data = await api<Employee[]>("/api/employees");
+      setEmployees(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load employees",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   const loadLeaveRequests = async () => {
-    const data = await api<LeaveRequest[]>("/api/leaverequests");
-    setLeaveRequests(data);
+    try {
+      const data = await api<LeaveRequest[]>("/api/leaverequests");
+      setLeaveRequests(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load leave requests",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
   };
 
   useEffect(() => {
