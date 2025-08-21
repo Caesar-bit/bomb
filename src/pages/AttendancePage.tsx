@@ -17,6 +17,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { mockLeaveRequests, mockEmployees } from "@/data/mockData";
+import { NewLeaveRequestDialog } from "@/components/ems/NewLeaveRequestDialog";
 
 const AttendancePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -64,10 +65,12 @@ const AttendancePage = () => {
             <Download className="h-4 w-4" />
             Export Report
           </Button>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Leave Request
-          </Button>
+          <NewLeaveRequestDialog>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Leave Request
+            </Button>
+          </NewLeaveRequestDialog>
         </div>
       </div>
 

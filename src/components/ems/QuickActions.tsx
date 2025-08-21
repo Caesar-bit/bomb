@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 import { 
   Plus, 
   Calendar, 
@@ -95,6 +96,32 @@ export const QuickActions = () => {
         <div className="grid grid-cols-2 gap-3">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
+
+            if (action.title === 'Add Employee') {
+              return (
+                <AddEmployeeDialog key={action.id}>
+                  <Button
+                    variant={action.variant}
+                    className="h-auto p-4 flex flex-col items-start text-left relative group hover:shadow-md transition-all duration-300 animate-fade-in"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <Icon className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                      {action.badge && (
+                        <Badge variant="destructive" className="animate-pulse-success text-xs px-1.5 py-0.5">
+                          {action.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm">{action.title}</p>
+                      <p className="text-xs text-muted-foreground">{action.description}</p>
+                    </div>
+                  </Button>
+                </AddEmployeeDialog>
+              );
+            }
+
             return (
               <Button
                 key={action.id}

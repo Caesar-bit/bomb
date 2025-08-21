@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Plus, Filter } from "lucide-react";
 import { mockEmployees } from "@/data/mockData";
 import { Employee } from "@/types/employee";
+import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -51,10 +52,12 @@ export const EmployeeList = () => {
         <div className="flex items-center justify-between">
           <CardTitle>Employee Directory</CardTitle>
           <div className="flex items-center gap-2">
-            <Button size="sm" className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Employee
-            </Button>
+            <AddEmployeeDialog>
+              <Button size="sm" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Employee
+              </Button>
+            </AddEmployeeDialog>
           </div>
         </div>
         <div className="flex items-center gap-2 mt-4">

@@ -18,6 +18,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { mockEmployees } from "@/data/mockData";
+import { NewReviewDialog } from "@/components/ems/NewReviewDialog";
 
 const PerformancePage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("Q1 2024");
@@ -77,10 +78,12 @@ const PerformancePage = () => {
             <FileText className="h-4 w-4" />
             Generate Report
           </Button>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Review
-          </Button>
+          <NewReviewDialog>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Review
+            </Button>
+          </NewReviewDialog>
         </div>
       </div>
 

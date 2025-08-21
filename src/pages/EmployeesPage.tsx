@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { mockEmployees } from "@/data/mockData";
 import { Employee } from "@/types/employee";
+import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -66,10 +67,12 @@ const EmployeesPage = () => {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Employee
-          </Button>
+          <AddEmployeeDialog>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Employee
+            </Button>
+          </AddEmployeeDialog>
         </div>
       </div>
 
