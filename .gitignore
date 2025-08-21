@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# .NET build artifacts
+**/bin/
+**/obj/
+**/*.db

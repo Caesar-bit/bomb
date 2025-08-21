@@ -1,22 +1,14 @@
 export interface Employee {
-  id: string;
+  id: number;
   name: string;
   email: string;
   department: string;
   position: string;
-  avatar?: string;
   status: 'online' | 'offline' | 'away' | 'busy';
   joinDate: string;
   salary: number;
   performance: number;
-  leaves: {
-    used: number;
-    total: number;
-  };
-  skills: string[];
-  phone?: string;
   location?: string;
-  manager?: string;
   lastLogin?: string;
 }
 
@@ -39,15 +31,12 @@ export interface PerformanceMetric {
 }
 
 export interface LeaveRequest {
-  id: string;
-  employeeId: string;
-  employeeName: string;
-  type: 'vacation' | 'sick' | 'personal' | 'maternity' | 'paternity';
+  id: number;
+  employeeId: number;
   startDate: string;
   endDate: string;
-  days: number;
-  status: 'pending' | 'approved' | 'rejected';
-  reason?: string;
+  reason: string;
+  status: string;
 }
 
 export interface Announcement {

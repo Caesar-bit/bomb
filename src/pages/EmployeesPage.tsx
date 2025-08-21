@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,11 @@ import {
   Briefcase,
   Star
 } from "lucide-react";
-import { mockEmployees } from "@/data/mockData";
 import { Employee } from "@/types/employee";
+import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
+import { ImportEmployeesDialog } from "@/components/ems/ImportEmployeesDialog";
+import { api, API_BASE } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 const getStatusColor = (status: Employee['status']) => {
   switch (status) {
@@ -36,10 +39,49 @@ const EmployeesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
-  const departments = Array.from(new Set(mockEmployees.map(emp => emp.department)));
-  
-  const filteredEmployees = mockEmployees.filter(employee => {
+  const loadEmployees = async () => {
+    try {
+      const data = await api<Employee[]>("/api/employees");
+      setEmployees(data);
+    } catch (err) {
+      toast({
+        title: "Failed to load employees",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/employees/export`);
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "employees.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      toast({
+        title: "Export failed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const departments = Array.from(new Set(employees.map(emp => emp.department)));
+
+  const filteredEmployees = employees.filter(employee => {
     const matchesSearch = employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          employee.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -58,18 +100,22 @@ const EmployeesPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Upload className="h-4 w-4" />
-            Import
-          </Button>
-          <Button variant="outline" className="gap-2">
+          <ImportEmployeesDialog onImported={loadEmployees}>
+            <Button variant="outline" className="gap-2">
+              <Upload className="h-4 w-4" />
+              Import
+            </Button>
+          </ImportEmployeesDialog>
+          <Button variant="outline" className="gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Employee
-          </Button>
+          <AddEmployeeDialog onAdded={loadEmployees}>
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Employee
+            </Button>
+          </AddEmployeeDialog>
         </div>
       </div>
 
@@ -157,18 +203,7 @@ const EmployeesPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-1">
-                    {employee.skills.slice(0, 3).map(skill => (
-                      <Badge key={skill} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {employee.skills.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{employee.skills.length - 3}
-                      </Badge>
-                    )}
-                  </div>
+                  {/* Skills removed until supported by backend */}
                 </CardContent>
               </Card>
             ))}
@@ -213,10 +248,7 @@ const EmployeesPage = () => {
                         <p className="font-medium">{employee.performance}%</p>
                         <p className="text-xs text-muted-foreground">Performance</p>
                       </div>
-                      <div className="text-center">
-                        <p className="font-medium">{employee.leaves.used}/{employee.leaves.total}</p>
-                        <p className="text-xs text-muted-foreground">Leave Days</p>
-                      </div>
+                      {/* Leave days removed until supported by backend */}
                     </div>
                   </div>
                 ))}
@@ -234,8 +266,8 @@ const EmployeesPage = () => {
               <CardContent>
                 <div className="space-y-3">
                   {departments.map(dept => {
-                    const count = mockEmployees.filter(emp => emp.department === dept).length;
-                    const percentage = (count / mockEmployees.length) * 100;
+                    const count = employees.filter(emp => emp.department === dept).length;
+                    const percentage = employees.length ? (count / employees.length) * 100 : 0;
                     return (
                       <div key={dept} className="space-y-2">
                         <div className="flex justify-between text-sm">
@@ -263,20 +295,20 @@ const EmployeesPage = () => {
                 <div className="space-y-4">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-success">
-                      {Math.round(mockEmployees.reduce((acc, emp) => acc + emp.performance, 0) / mockEmployees.length)}%
+                      {employees.length ? Math.round(employees.reduce((acc, emp) => acc + emp.performance, 0) / employees.length) : 0}%
                     </p>
                     <p className="text-sm text-muted-foreground">Average Performance</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
                       <p className="text-lg font-semibold text-success">
-                        {mockEmployees.filter(emp => emp.performance >= 90).length}
+                        {employees.filter(emp => emp.performance >= 90).length}
                       </p>
                       <p className="text-xs text-muted-foreground">High Performers</p>
                     </div>
                     <div>
                       <p className="text-lg font-semibold text-warning">
-                        {mockEmployees.filter(emp => emp.performance < 80).length}
+                        {employees.filter(emp => emp.performance < 80).length}
                       </p>
                       <p className="text-xs text-muted-foreground">Need Improvement</p>
                     </div>
@@ -292,7 +324,7 @@ const EmployeesPage = () => {
               <CardContent>
                 <div className="space-y-3">
                   {(['online', 'busy', 'away', 'offline'] as const).map(status => {
-                    const count = mockEmployees.filter(emp => emp.status === status).length;
+                    const count = employees.filter(emp => emp.status === status).length;
                     return (
                       <div key={status} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
