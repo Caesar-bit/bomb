@@ -33,9 +33,10 @@ const formSchema = z.object({
 
 interface ImportEmployeesDialogProps {
   children: React.ReactNode;
+  onImported?: () => void;
 }
 
-export function ImportEmployeesDialog({ children }: ImportEmployeesDialogProps) {
+export function ImportEmployeesDialog({ children, onImported }: ImportEmployeesDialogProps) {
   const [open, setOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,6 +63,7 @@ export function ImportEmployeesDialog({ children }: ImportEmployeesDialogProps) 
       });
       setOpen(false);
       form.reset();
+      onImported?.();
     } catch (err) {
       toast({
         title: "Import Failed",

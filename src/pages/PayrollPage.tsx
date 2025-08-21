@@ -15,11 +15,22 @@ import {
   FileText,
   TrendingUp,
 } from "lucide-react";
-import { mockEmployees } from "@/data/mockData";
+import { api } from "@/lib/api";
+import { Employee } from "@/types/employee";
 
 const PayrollPage = () => {
-  const totalPayroll = mockEmployees.reduce((sum, e) => sum + e.salary, 0);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const totalPayroll = employees.reduce((sum, e) => sum + e.salary, 0);
   const [animatedPayroll, setAnimatedPayroll] = useState(0);
+
+  const loadEmployees = async () => {
+    const data = await api<Employee[]>("/api/employees");
+    setEmployees(data);
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedPayroll(totalPayroll), 300);
@@ -96,7 +107,7 @@ const PayrollPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockEmployees.map((emp, idx) => (
+              {employees.map((emp, idx) => (
                 <TableRow key={emp.id} className="animate-slide-in" style={{ animationDelay: `${idx * 50}ms` }}>
                   <TableCell className="font-medium">{emp.name}</TableCell>
                   <TableCell>{emp.department}</TableCell>

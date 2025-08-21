@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,14 +17,25 @@ import {
   Users,
   BarChart3
 } from "lucide-react";
-import { mockEmployees } from "@/data/mockData";
+import { api } from "@/lib/api";
+import { Employee } from "@/types/employee";
 import { NewReviewDialog } from "@/components/ems/NewReviewDialog";
 import { GenerateReportDialog } from "@/components/ems/GenerateReportDialog";
 
 const PerformancePage = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("Q1 2024");
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
-  const topPerformers = mockEmployees
+  const loadEmployees = async () => {
+    const data = await api<Employee[]>("/api/employees");
+    setEmployees(data);
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const topPerformers = [...employees]
     .sort((a, b) => b.performance - a.performance)
     .slice(0, 5);
 
@@ -193,9 +204,11 @@ const PerformancePage = () => {
               <CardContent>
                 <div className="space-y-4">
                   {['Engineering', 'Design', 'Sales', 'Marketing'].map((dept, index) => {
-                    const deptEmployees = mockEmployees.filter(emp => emp.department === dept);
-                    const avgPerformance = deptEmployees.reduce((acc, emp) => acc + emp.performance, 0) / deptEmployees.length;
-                    
+                    const deptEmployees = employees.filter(emp => emp.department === dept);
+                    const avgPerformance = deptEmployees.length
+                      ? deptEmployees.reduce((acc, emp) => acc + emp.performance, 0) / deptEmployees.length
+                      : 0;
+
                     return (
                       <div key={dept} className="space-y-2 animate-fade-in" style={{ animationDelay: `${index * 150}ms` }}>
                         <div className="flex justify-between text-sm">

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Filter } from "lucide-react";
-import { mockEmployees } from "@/data/mockData";
+import { api } from "@/lib/api";
 import { Employee } from "@/types/employee";
 import { AddEmployeeDialog } from "@/components/ems/AddEmployeeDialog";
 
@@ -30,14 +30,25 @@ const getStatusLabel = (status: Employee['status']) => {
 
 export const EmployeeList = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredEmployees, setFilteredEmployees] = useState(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
+
+  const loadEmployees = async () => {
+    const data = await api<Employee[]>("/api/employees");
+    setEmployees(data);
+    setFilteredEmployees(data);
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
     if (term === "") {
-      setFilteredEmployees(mockEmployees);
+      setFilteredEmployees(employees);
     } else {
-      const filtered = mockEmployees.filter(employee =>
+      const filtered = employees.filter(employee =>
         employee.name.toLowerCase().includes(term.toLowerCase()) ||
         employee.department.toLowerCase().includes(term.toLowerCase()) ||
         employee.position.toLowerCase().includes(term.toLowerCase())
@@ -52,7 +63,7 @@ export const EmployeeList = () => {
         <div className="flex items-center justify-between">
           <CardTitle>Employee Directory</CardTitle>
           <div className="flex items-center gap-2">
-            <AddEmployeeDialog>
+            <AddEmployeeDialog onAdded={loadEmployees}>
               <Button size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add Employee

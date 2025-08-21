@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,19 +16,37 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
-import { mockLeaveRequests, mockEmployees } from "@/data/mockData";
 import { NewLeaveRequestDialog } from "@/components/ems/NewLeaveRequestDialog";
 import { ExportAttendanceReportDialog } from "@/components/ems/ExportAttendanceReportDialog";
+import { api } from "@/lib/api";
+import { Employee, LeaveRequest } from "@/types/employee";
 
 const AttendancePage = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+
+  const loadEmployees = async () => {
+    const data = await api<Employee[]>("/api/employees");
+    setEmployees(data);
+  };
+
+  const loadLeaveRequests = async () => {
+    const data = await api<LeaveRequest[]>("/api/leaverequests");
+    setLeaveRequests(data);
+  };
+
+  useEffect(() => {
+    loadEmployees();
+    loadLeaveRequests();
+  }, []);
 
   const attendanceStats = {
-    totalEmployees: mockEmployees.length,
-    present: mockEmployees.filter(emp => emp.status !== 'offline').length,
-    absent: mockEmployees.filter(emp => emp.status === 'offline').length,
-    onLeave: 5,
-    avgWorkHours: 8.2
+    totalEmployees: employees.length,
+    present: employees.filter(emp => emp.status !== 'offline').length,
+    absent: employees.filter(emp => emp.status === 'offline').length,
+    onLeave: leaveRequests.length,
+    avgWorkHours: 0,
   };
 
   const getLeaveStatusColor = (status: string) => {
@@ -40,16 +58,26 @@ const AttendancePage = () => {
     }
   };
 
-  const getLeaveTypeColor = (type: string) => {
-    switch (type) {
-      case 'vacation': return 'bg-info/10 text-info border-info/20';
-      case 'sick': return 'bg-destructive/10 text-destructive border-destructive/20';
-      case 'personal': return 'bg-warning/10 text-warning border-warning/20';
-      case 'maternity': return 'bg-success/10 text-success border-success/20';
-      case 'paternity': return 'bg-success/10 text-success border-success/20';
-      default: return 'bg-muted/10 text-muted-foreground border-muted/20';
-    }
+  const getDays = (start: string, end: string) => {
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    return Math.ceil(ms / (1000 * 60 * 60 * 24)) + 1;
   };
+
+  const leaveTypeCounts = leaveRequests.reduce((acc, req) => {
+    const type = req.reason.split(':')[0];
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const leaveTypeData = Object.entries(leaveTypeCounts).map(([type, count]) => ({
+    type,
+    count,
+    percentage: leaveRequests.length ? (count / leaveRequests.length) * 100 : 0,
+  }));
+
+  const avgLeaveDays = leaveRequests.length
+    ? leaveRequests.reduce((sum, r) => sum + getDays(r.startDate, r.endDate), 0) / leaveRequests.length
+    : 0;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -153,8 +181,8 @@ const AttendancePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockEmployees.map((employee, index) => (
-                    <div 
+                  {employees.map((employee, index) => (
+                    <div
                       key={employee.id}
                       className="flex items-center justify-between p-4 border border-border rounded-lg animate-slide-in"
                       style={{ animationDelay: `${index * 50}ms` }}
@@ -232,44 +260,44 @@ const AttendancePage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockLeaveRequests.map((request, index) => (
-                    <div 
-                      key={request.id}
-                      className="p-4 border border-border rounded-lg space-y-3 animate-fade-in"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{request.employeeName}</p>
-                          <p className="text-sm text-muted-foreground">{request.reason}</p>
+                  {leaveRequests.map((request, index) => {
+                    const employee = employees.find(e => e.id === request.employeeId);
+                    return (
+                      <div
+                        key={request.id}
+                        className="p-4 border border-border rounded-lg space-y-3 animate-fade-in"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{employee ? employee.name : `Employee ${request.employeeId}`}</p>
+                            <p className="text-sm text-muted-foreground">{request.reason}</p>
+                          </div>
+                          <Badge variant="outline" className={getLeaveStatusColor(request.status.toLowerCase())}>
+                            {request.status}
+                          </Badge>
                         </div>
-                        <Badge variant="outline" className={getLeaveStatusColor(request.status)}>
-                          {request.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-4 text-sm">
-                        <Badge variant="outline" className={getLeaveTypeColor(request.type)}>
-                          {request.type}
-                        </Badge>
-                        <span className="text-muted-foreground">
-                          {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
-                        </span>
-                        <span className="font-medium">{request.days} days</span>
-                      </div>
 
-                      {request.status === 'pending' && (
-                        <div className="flex gap-2 pt-2">
-                          <Button size="sm" variant="outline" className="text-success border-success/20 hover:bg-success/10">
-                            Approve
-                          </Button>
-                          <Button size="sm" variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/10">
-                            Reject
-                          </Button>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="text-muted-foreground">
+                            {new Date(request.startDate).toLocaleDateString()} - {new Date(request.endDate).toLocaleDateString()}
+                          </span>
+                          <span className="font-medium">{getDays(request.startDate, request.endDate)} days</span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+
+                        {request.status.toLowerCase() === 'pending' && (
+                          <div className="flex gap-2 pt-2">
+                            <Button size="sm" variant="outline" className="text-success border-success/20 hover:bg-success/10">
+                              Approve
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/10">
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -281,25 +309,20 @@ const AttendancePage = () => {
               <CardContent>
                 <div className="space-y-6">
                   <div className="text-center p-4 bg-accent/20 rounded-lg">
-                    <p className="text-2xl font-bold">18.5</p>
+                    <p className="text-2xl font-bold">{avgLeaveDays.toFixed(1)}</p>
                     <p className="text-sm text-muted-foreground">Average leave days used</p>
                   </div>
 
                   <div className="space-y-4">
                     <h4 className="font-medium">Leave Types Distribution</h4>
-                    {[
-                      { type: 'Vacation', count: 45, percentage: 60 },
-                      { type: 'Sick Leave', count: 18, percentage: 24 },
-                      { type: 'Personal', count: 8, percentage: 11 },
-                      { type: 'Maternity/Paternity', count: 4, percentage: 5 }
-                    ].map((item, index) => (
+                    {leaveTypeData.map((item, index) => (
                       <div key={item.type} className="space-y-2 animate-slide-in" style={{ animationDelay: `${index * 100}ms` }}>
                         <div className="flex justify-between text-sm">
                           <span>{item.type}</span>
                           <span>{item.count} requests</span>
                         </div>
                         <div className="h-2 bg-muted rounded-full">
-                          <div 
+                          <div
                             className="h-full bg-primary rounded-full transition-all duration-1000"
                             style={{ width: `${item.percentage}%` }}
                           />
@@ -320,8 +343,8 @@ const AttendancePage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockEmployees.slice(0, 6).map((employee, index) => (
-                  <div 
+                {employees.slice(0, 6).map((employee, index) => (
+                  <div
                     key={employee.id}
                     className="p-4 border border-border rounded-lg animate-fade-in"
                     style={{ animationDelay: `${index * 100}ms` }}
